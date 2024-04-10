@@ -4,6 +4,7 @@
 
 #include "GyverStepper.h"
 #include <EEPROM.h>
+#include "EEManager.h"
 //#include "GyverPlanner.h"
 
 #define sensorMax1 30
@@ -29,7 +30,7 @@ int pins[4][3] = {
   { 3, 4, 9 },
   { 11, 5, 10 },
 };  // {{dir,en,step}}
-long positionsDrivers[4] = { 0, 0, 0, 0 };
+int positions[64][4];
 
 int counterCoordinates = 0;
 
@@ -38,7 +39,8 @@ int counterCoordinates = 0;
 
 int readyDrivers = 0;
 
-
+int parsingData[257];
+EEManager memory(parsingData);
 
 GStepper<STEPPER2WIRE> stepper1(8192, pins[0][0], pins[0][0], pins[0][1]);
 GStepper<STEPPER2WIRE> stepper2(8192, pins[1][3], pins[1][0], pins[1][1]);
@@ -77,13 +79,13 @@ void setup() {
 }
 
 void loop() {
-  if (startMove == true){
+   parse();
+   if (command == 1){
+    memory.updateNow(parsingData);
+   }
+   else if (command == 2){
     rotationAuto();
-  }
-  else {
-    rotation();
-  }
-  
+   }
 }
 
 
@@ -138,7 +140,8 @@ void rotation() {
 
 //работа через запарашенные коорды
 int rotationIndex = 0;
-void rotationAUTO() {
+
+void rotationAUTO(int coordinates[4]) {
   if (rotationIndex == 4){
     rotationIndex = 0;
   }
@@ -190,20 +193,27 @@ void moveToHome() {
 
 
     // число значений в массиве, который хотим получить
-int parsingData[257] = new int [257];     // массив численных значений после парсинга
-boolean recievedFlag = false;
-boolean getStarted = false;
-byte index = 0;
+     // массив численных значений после парсинга
+bool recievedFlag = false;
+bool getStarted = false;
+int index = 0;
 String string_convert = "";
+int command = 0; 
 
-void parsing() {
+
+void parse() {
   if (Serial.available() > 0) {
     char incomingByte = Serial.read();        // обязательно ЧИТАЕМ входящий символ
     if (getStarted) {                         // если приняли начальный символ (парсинг разрешён)
       if (incomingByte != ' ' && incomingByte != ';') {   // если это не пробел И не конец
         string_convert += incomingByte;       // складываем в строку
-      } else {                                // если это пробел или ; конец пакета
-        parsingData[index] = string_convert.toInt();  // преобразуем строку в int и кладём в массив
+      } else {
+        if (index == 0){
+          command = string_convert.toInt();
+        } 
+        else{                     
+          parsingData[index-1] = string_convert.toInt();  // преобразуем строку в int и кладём в массив
+        }
         string_convert = "";                  // очищаем строку
         index++;                              // переходим к парсингу следующего элемента массива
       }
@@ -219,4 +229,16 @@ void parsing() {
     }
   }
 }
-  
+
+int counter=0;
+int counterDriver=0;
+void positions(){
+
+  positions[counter][counterDriver]
+  counterDriver++;
+  if (counterDriver==4){
+  counter++
+  counterDriver=0;
+  }
+}
+
