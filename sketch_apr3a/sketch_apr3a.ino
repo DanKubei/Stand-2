@@ -84,7 +84,7 @@ void loop() {
     memory.updateNow(parsingData);
    }
    else if (command == 2){
-    rotationAuto();
+    rotationAuto(position[][]);
    }
 }
 
@@ -232,13 +232,25 @@ void parse() {
 
 int counter=0;
 int counterDriver=0;
-void positions(){
+int counterData = 0;
+//int positions[64][4]
+//{
+  //{0,1,1,45}
+//};
 
-  positions[counter][counterDriver]
+void positions(){
+  positions[counter][counterDriver] = parsingData[counterData];
   counterDriver++;
+  counterData++;
   if (counterDriver==4){
-  counter++
+  counter++;
   counterDriver=0;
+  }
+  if (counter >= 64){
+    counter=0;
+  }
+  if (counterData >= 255){
+    countercounter=0;
   }
 }
 
